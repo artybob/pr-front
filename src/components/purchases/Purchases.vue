@@ -2,6 +2,7 @@
     <div>
         <h1>Purchases list</h1>
         <div class="container">
+
             <div v-if="purchases">
                 <v-data-table
                         :headers="headers"
@@ -9,108 +10,205 @@
                         :loading="loading"
                         :options.sync="options"
                         :page.sync="page"
+                        :sort-by.sync="sortBy"
+                        :sort-desc.sync="sortDesc"
                         :server-items-length="purchasesMeta.total"
+                        hide-default-footer
+                        dense
                         class=""
                 >
+                    <template v-slot:top>
+                        <v-toolbar flat>
+                            <v-toolbar-title>Purchases</v-toolbar-title>
+                            <v-divider
+                                    class="mx-4"
+                                    inset
+                                    vertical
+                            ></v-divider>
+                            <v-spacer></v-spacer>
+                            <v-dialog
+                                    v-model="dialog"
+                                    max-width="500px"
+                            >
+                                <template v-slot:activator="{ on, attrs }">
+                                    <v-btn
+                                            color="primary"
+                                            dark
+                                            class="mb-2"
+                                            v-bind="attrs"
+                                            v-on="on"
+                                    >
+                                        New Item
+                                    </v-btn>
+                                </template>
+                                <v-card>
+                                    <v-card-title>
+                                        <span class="headline">Create new purchase</span>
+                                    </v-card-title>
+                                    <v-form v-model="valid"
+                                            ref="form"
+                                            @submit.prevent="submit"
+                                            name="purchasesForm">
+                                        <v-card-text>
+                                            <v-container class="">
+                                                    <div style="max-width: 400px" class="ma-auto mb-6">
+                                                        <v-row>
+                                                            <v-col
+                                                                    cols="12"
+                                                            >
+                                                                <v-text-field
+                                                                        id="title"
+                                                                        v-model="title"
+                                                                        type="text"
+                                                                        name="title"
+                                                                        :rules="titleRules"
+                                                                        :counter="100"
+                                                                        label="Purchase title"
+                                                                        required
+                                                                ></v-text-field>
+                                                            </v-col>
+                                                            <v-col
+                                                                    cols="12"
+                                                            >
+                                                                <v-text-field
+                                                                        id="specId"
+                                                                        v-model="specId"
+                                                                        name="specId"
+                                                                        :rules="specIdRules"
+                                                                        label="Specification Id"
+                                                                        required
+                                                                ></v-text-field>
+                                                            </v-col>
+                                                        </v-row>
+                                                    </div>
+                                                </v-container>
+                                        </v-card-text>
+
+                                        <v-card-actions>
+                                        <v-spacer></v-spacer>
+                                            <v-btn
+                                                    color="blue darken-1"
+                                                    text
+                                                    @click="close"
+                                            >
+                                                Cancel
+                                            </v-btn>
+                                            <v-btn
+                                                    text
+                                                    :disabled=!valid
+                                                    @click="submit"
+                                                    type="submit"
+                                            >
+                                                Save
+                                            </v-btn>
+                                        </v-card-actions>
+                                    </v-form>
+                                </v-card>
+                            </v-dialog>
+                        </v-toolbar>
+                    </template>
+
                     <template v-slot:item.created_at="{ item }">
                         <span>{{ new Date(item.created_at).toLocaleString() }}</span>
                     </template>
+
                 </v-data-table>
                 <div class="text-center pt-2">
                     <v-pagination
+                            :disabled="loading"
                             v-model="page"
                             :length="purchasesMeta.last_page"
                     ></v-pagination>
                 </div>
-                <button @click="changeSortBy('title', switchSort = !switchSort)">SortTitle</button>
-                <button @click="changeSortBy('created_at', switchSort  = !switchSort)">SortCreated</button>
             </div>
 
-            <form
-                    @submit="checkForm"
-                    name="purchasesForm"
-                    novalidate="true"
-            >
-
-                <p v-if="errors.length">
-                    <b>Пожалуйста исправьте указанные ошибки:</b>
-                    <ul>
-                        <li v-for="error in errors" v-bind:key="error">{{ error }}</li>
-                    </ul>
-                </p>
-
-                <p>
-                    <label for="title">title</label>
-                    <input
-                            id="title"
-                            v-model="title"
-                            type="text"
-                            name="title"
-                    >
-                </p>
-
-                <p>
-                    <label for="specId">specId</label>
-                    <input
-                            id="specId"
-                            v-model="specId"
-                            name="specId"
-                    >
-                </p>
-
-                <p>
-                    <input
-                            type="submit"
-                            value="Отправить"
-                    >
-                </p>
-
-            </form>
         </div>
+
+        <v-snackbar
+                v-model="snackbar"
+                :timeout="timeout"
+                color="success"
+        >
+            Purchase '{{purchase.title}}' was successfully created at {{ new Date(purchase.created_at).toLocaleString() }}
+
+            <template v-slot:action="{ attrs }">
+                <v-btn
+                        color="white"
+                        text
+                        v-bind="attrs"
+                        @click="snackbar = false"
+                >
+                    Close
+                </v-btn>
+            </template>
+        </v-snackbar>
     </div>
 </template>
 <script>
-//    валидация обратная сортировка и ошибки и дизайн
     import {mapActions, mapState} from 'vuex'
 
     export default {
         name: "Purchases",
         data() {
             return {
+                dialog: false,
+                snackbar: false,
+                timeout: 10000,
+                sortDesc: true,
                 sortBy: 'created_at',
                 sortType: 'asc',
-                switchSort: false,
-                page: 0,
-                errors: [],
-                title: null,
-                specId: null,
-                totalDesserts: 0,
+                page: 1,
+                title: '',
+                specId: '',
+                valid: false,
                 loading: true,
                 options: {},
                 headers: [
                     {
+                        text: 'Id',
+                        sortable: false,
+                        align: 'start',
+                        value: 'id',
+                    },
+                    {
                         text: 'Title',
                         align: 'start',
-                        sortable: false,
                         value: 'title',
                     },
-                    { text: 'Created', value: 'created_at' },
+                    {   text: 'Created',
+                        value: 'created_at',
+                        align: 'end',
+                    },
+                ],
+                specIdRules: [
+                    v => !!v || 'Specification Id is required',
+                    v => v.length >= 4 || 'Specification Id must be least than 4 characters',
+                    v => /^[A-Za-z0-9]+$/.test(v) || 'Only Latin letters and numbers are allowed.',
+                ],
+                titleRules: [
+                    v => !!v || 'title is required',
+                    v => v.length >= 4 || 'Title must be least than 4 characters',
+                    v => v.length <= 100 || 'Title must be less than 100 characters',
                 ],
             }
         },
         async created() {
-            this.getPurchases();
         },
         watch: {
             options: {
                 handler () {
+                    this.sortType = this.sortDesc ? 'asc' : 'desc';
                     this.getPurchases();
                 },
                 deep: true,
             },
+            dialog (val) {
+                val || this.close()
+            },
         },
         computed:
             mapState([
+            'purchase',
             'purchases',
             'purchasesMeta'
         ]),
@@ -119,7 +217,18 @@
                 'fetchPurchases',
                 'createPurchase',
             ]),
-            async getPurchases (page,sortBy,sortType) {
+            toggleOrder () {
+                this.sortDesc = !this.sortDesc;
+            },
+            nextSort () {
+                let index = this.headers.findIndex(h => h.value === this.sortBy)
+                index = (index + 1) % this.headers.length
+                this.sortBy = this.headers[index].value
+            },
+            close () {
+                this.dialog = false;
+            },
+            async getPurchases (page, sortBy, sortType) {
                 this.loading = true
                 this.fetchPurchases({
                     getParams:{
@@ -128,49 +237,24 @@
                         sortType: sortType || this.sortType
                     }
                 }).then(()=> {
-                    this.loading = false
+                    this.loading = false;
                 });
             },
             async addPurchase(data) {
                 this.loading = true
                 this.createPurchase(data).then(()=> {
-                    this.loading = false
+                    this.snackbar = true;
+                    this.loading = false;
                 });
             },
-            changeSortBy(sortBy, switchSort){
-                this.sortBy = sortBy;
-                this.sortType = switchSort ? 'asc' : 'desc';
-                this.getPurchases();
-            },
-            changePage(page) {
-                this.page = page;
-                this.getPurchases();
-            },
-            checkForm: async function (e) {
-                e.preventDefault();
+            submit: async function () {
+                this.$refs.form.validate();
 
-                this.errors = [];
-
-                if (!this.title) {
-                    this.errors.push('Требуется указать title.');
-                } else if (this.title.length < 4 || this.title.length > 100) {
-                    this.errors.push('Поле должно быть 4-100 символов.');
-                }
-                if (!this.specId) {
-                    this.errors.push('Требуется указать specId.');
-                } else if (! /^[A-Za-z0-9]+$/.test(this.specId)) {
-                    this.errors.push('Допустимы только латинские буквы и цифры.');
-                }
-
-                if (!this.errors.length) {
-                    const formData = new FormData(document.forms.namedItem("purchasesForm"));
-                    // for (var pair of formData.entries()) {
-                    //     console.log(pair[0]+ ', ' + pair[1]);
-                    // }
+                const formData = new FormData(document.forms.namedItem("purchasesForm"));
+                this.addPurchase(formData).then(()=> {
                     this.getPurchases(this.purchasesMeta.last_page,'created_at', 'asc').then(()=> {
-                        this.addPurchase(formData);
                     });
-                }
+                })
             },
 
         },

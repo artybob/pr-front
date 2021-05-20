@@ -10,6 +10,7 @@ const GET_PURCHASES = "GET_PURCHASES";
 export default new Vuex.Store({
     plugins: [storePlugins],
     state: {
+        purchase: [],
         purchases: [],
         purchasesMeta: [],
     },
@@ -24,8 +25,8 @@ export default new Vuex.Store({
             state.purchasesMeta = purchases.meta;
         },
         [ADD_PURCHASES](state, purchase) {
-            state.purchases = [...state.purchases, purchase];
-            state.purchasesMeta = purchase.meta;
+            state.purchase = purchase;
+            // state.purchases = [...state.purchases, purchase];
         },
     },
     actions: {
