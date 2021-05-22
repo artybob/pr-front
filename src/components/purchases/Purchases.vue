@@ -194,10 +194,13 @@
             }
         },
         created() {
-            eventBus.$on('api-request-done', this.snackResult)
+            eventBus.$on('api-error', response => {
+                this.alertMessage = response;
+                this.alertSnack('error')
+            })
         },
         beforeDestroy() {
-            eventBus.$off('api-request-done');
+            eventBus.$off('api-error');
         },
         watch: {
             options: {
@@ -233,9 +236,8 @@
             close () {
                 this.dialog = false;
             },
-            snackResult(result) {
-                this.snackColor = 'error';
-                this.alertMessage = result;
+            alertSnack(snackColor) {
+                this.snackColor = snackColor;
                 this.snackbar = true;
             },
             async getPurchases (page, sortBy, sortType) {
@@ -253,8 +255,9 @@
             async addPurchase(data) {
                 this.loading = true
                 this.createPurchase(data).then(()=> {
-                    // this.alertMessage = "Purchase '{{purchase.title}}' was successfully created at {{ new Date(purchase.created_at).toLocaleString() }}";
-                    // this.snackbar = true;
+                    this.alertMessage = `Purchase ${this.purchase.title} was successfully created at ${ new Date(this.purchase.created_at).toLocaleString() }`;
+                    this.alertSnack('success');
+                    this.dialog = false;
                     this.loading = false;
                 });
             },

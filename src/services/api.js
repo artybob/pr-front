@@ -18,7 +18,8 @@ class BaseApiService {
     }
 
     handleErrors(err) {
-        eventBus.$emit('api-request-done', err);
+        console.log(err);
+        eventBus.$emit('api-error', err);
     }
 }
 
