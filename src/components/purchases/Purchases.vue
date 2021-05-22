@@ -1,6 +1,6 @@
 <template>
     <div>
-        <h1>Purchases list</h1>
+        <h1>Purchases requests</h1>
         <div class="container">
 
             <div v-if="purchases">
@@ -10,29 +10,61 @@
                         :loading="loading"
                         :options.sync="options"
                         :page.sync="page"
-                        :sort-by.sync="sortBy"
-                        :sort-desc.sync="sortDesc"
                         :server-items-length="purchasesMeta.total"
                         hide-default-footer
                         dense
-                        class=""
                 >
                     <template v-slot:top>
-                        <v-toolbar flat>
-                            <v-toolbar-title>Purchases</v-toolbar-title>
+                        <v-toolbar flat
+                                   color="blue darken-3"
+                                   class="mb-1">
+                            <v-toolbar-title class="white--text">Purchases list</v-toolbar-title>
                             <v-divider
                                     class="mx-4"
                                     inset
                                     vertical
                             ></v-divider>
                             <v-spacer></v-spacer>
+
+                            <v-select
+                                    v-model="sortBy"
+                                    flat
+                                    class="white"
+                                    solo-inverted
+                                    hide-details
+                                    :items="headers"
+                                    prepend-inner-icon="mdi-magnify"
+                                    label="Sort by"
+                            ></v-select>
+                            <v-btn-toggle
+                                    v-model="sortDesc"
+                                    mandatory
+                            >
+                                <v-btn
+                                        large
+                                        depressed
+                                        color="blue"
+                                        :value="0"
+                                >
+                                    <v-icon>mdi-arrow-up</v-icon>
+                                </v-btn>
+                                <v-btn
+                                        large
+                                        depressed
+                                        color="blue"
+                                        :value="1"
+                                >
+                                    <v-icon>mdi-arrow-down</v-icon>
+                                </v-btn>
+                            </v-btn-toggle>
+
                             <v-dialog
                                     v-model="dialog"
                                     max-width="500px"
                             >
                                 <template v-slot:activator="{ on, attrs }">
                                     <v-btn
-                                            color="primary"
+                                            depressed
                                             dark
                                             class="mb-2"
                                             v-bind="attrs"
@@ -45,6 +77,8 @@
                                     <v-card-title>
                                         <span class="headline">Create new purchase</span>
                                     </v-card-title>
+                                    <v-spacer></v-spacer>
+
                                     <v-form v-model="valid"
                                             ref="form"
                                             @submit.prevent="submit"
@@ -155,9 +189,8 @@
                 snackColor: 'success',
                 alertMessage: '',
                 timeout: 10000,
-                sortDesc: true,
-                sortBy: 'created_at',
-                sortType: 'asc',
+                sortDesc: 1,
+                sortBy: '',
                 page: 1,
                 title: '',
                 specId: '',
@@ -174,9 +207,11 @@
                     {
                         text: 'Title',
                         align: 'start',
+                        sortable: false,
                         value: 'title',
                     },
                     {   text: 'Created',
+                        sortable: false,
                         value: 'created_at',
                         align: 'end',
                     },
@@ -205,10 +240,15 @@
         watch: {
             options: {
                 handler () {
-                    this.sortType = this.sortDesc ? 'asc' : 'desc';
-                    this.getPurchases();
+                    this.getPurchases()
                 },
                 deep: true,
+            },
+            sortBy(){
+                this.getPurchases();
+            },
+            sortDesc(){
+                this.getPurchases();
             },
             dialog (val) {
                 val || this.close()
@@ -225,14 +265,6 @@
                 'fetchPurchases',
                 'createPurchase',
             ]),
-            toggleOrder () {
-                this.sortDesc = !this.sortDesc;
-            },
-            nextSort () {
-                let index = this.headers.findIndex(h => h.value === this.sortBy)
-                index = (index + 1) % this.headers.length
-                this.sortBy = this.headers[index].value
-            },
             close () {
                 this.dialog = false;
             },
@@ -240,13 +272,13 @@
                 this.snackColor = snackColor;
                 this.snackbar = true;
             },
-            async getPurchases (page, sortBy, sortType) {
+            async getPurchases (page, sortBy) {
                 this.loading = true
                 this.fetchPurchases({
                     getParams:{
                         page: page || this.page,
                         sortBy: sortBy || this.sortBy,
-                        sortType: sortType || this.sortType
+                        desc: this.sortDesc
                     }
                 }).then(()=> {
                     this.loading = false;
@@ -266,7 +298,7 @@
 
                 const formData = new FormData(document.forms.namedItem("purchasesForm"));
                 this.addPurchase(formData).then(()=> {
-                    this.getPurchases(this.purchasesMeta.last_page,'created_at', 'asc').then(()=> {
+                    this.getPurchases(this.purchasesMeta.last_page,'created_at', 0).then(()=> {
                     });
                 })
             },
