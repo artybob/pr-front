@@ -15,9 +15,6 @@ export default new Vuex.Store({
         purchasesMeta: [],
     },
     getters: {
-        sortedPurchases (state) {
-            return parent._.orderBy(state.purchases, 'title', 'asc');
-        },
     },
     mutations: {
         [GET_PURCHASES](state, purchases) {

@@ -127,10 +127,8 @@
         <v-snackbar
                 v-model="snackbar"
                 :timeout="timeout"
-                color="success"
-        >
-            Purchase '{{purchase.title}}' was successfully created at {{ new Date(purchase.created_at).toLocaleString() }}
-
+                :color="snackColor"
+        >{{alertMessage}}
             <template v-slot:action="{ attrs }">
                 <v-btn
                         color="white"
@@ -146,6 +144,7 @@
 </template>
 <script>
     import {mapActions, mapState} from 'vuex'
+    import {eventBus} from '@/main'
 
     export default {
         name: "Purchases",
@@ -153,6 +152,8 @@
             return {
                 dialog: false,
                 snackbar: false,
+                snackColor: 'success',
+                alertMessage: '',
                 timeout: 10000,
                 sortDesc: true,
                 sortBy: 'created_at',
@@ -192,7 +193,11 @@
                 ],
             }
         },
-        async created() {
+        created() {
+            eventBus.$on('api-request-done', this.snackResult)
+        },
+        beforeDestroy() {
+            eventBus.$off('api-request-done');
         },
         watch: {
             options: {
@@ -228,6 +233,11 @@
             close () {
                 this.dialog = false;
             },
+            snackResult(result) {
+                this.snackColor = 'error';
+                this.alertMessage = result;
+                this.snackbar = true;
+            },
             async getPurchases (page, sortBy, sortType) {
                 this.loading = true
                 this.fetchPurchases({
@@ -243,7 +253,8 @@
             async addPurchase(data) {
                 this.loading = true
                 this.createPurchase(data).then(()=> {
-                    this.snackbar = true;
+                    // this.alertMessage = "Purchase '{{purchase.title}}' was successfully created at {{ new Date(purchase.created_at).toLocaleString() }}";
+                    // this.snackbar = true;
                     this.loading = false;
                 });
             },

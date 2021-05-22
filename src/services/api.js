@@ -1,3 +1,5 @@
+import {eventBus} from '@/main'
+
 class BaseApiService {
 
     baseUrl = process.env.VUE_APP_BASE_URL;
@@ -15,12 +17,8 @@ class BaseApiService {
         return url;
     }
 
-    getData(response) {
-        return response.data;
-    }
-
     handleErrors(err) {
-        console.log({ message: "Errors is handled here", err });
+        eventBus.$emit('api-request-done', err);
     }
 }
 
@@ -32,6 +30,11 @@ class ReadOnlyApiService extends BaseApiService {
     async fetch(urlParams) {
         try {
             const response = await fetch(this.getUrl(urlParams));
+
+            if(!response.ok){
+                throw new Error(`${response.status} from ${response.url}`);
+            }
+
             return await response.json();
         } catch (err) {
             this.handleErrors(err);
@@ -41,6 +44,11 @@ class ReadOnlyApiService extends BaseApiService {
         try {
             if (!urlParams.id) throw Error("Id is not provided");
             const response = await fetch(this.getUrl(urlParams));
+
+            if(!response.ok){
+                throw new Error(`${response.status} from ${response.url}`);
+            }
+
             return await response.json();
         } catch (err) {
             this.handleErrors(err);
@@ -58,6 +66,11 @@ class ModelApiService extends ReadOnlyApiService {
                 method: "POST",
                 body: data,
             });
+
+            if(!response.ok){
+                throw new Error(`${response.status} from ${response.url}`);
+            }
+
             return await response.json();
         } catch (err) {
             this.handleErrors(err);
@@ -70,6 +83,11 @@ class ModelApiService extends ReadOnlyApiService {
                 method: "PUT",
                 body: JSON.stringify(data)
             });
+
+            if(!response.ok){
+                throw new Error(`${response.status} from ${response.url}`);
+            }
+
             return await response.json();
         } catch (err) {
             this.handleErrors(err);
@@ -81,6 +99,11 @@ class ModelApiService extends ReadOnlyApiService {
             const response = await fetch(this.getUrl(urlParams), {
                 method: "DELETE"
             });
+
+            if(!response.ok){
+                throw new Error(`${response.status} from ${response.url}`);
+            }
+
             return await response.json();
         } catch (err) {
             this.handleErrors(err);

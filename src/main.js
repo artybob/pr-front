@@ -3,8 +3,6 @@ import App from './App.vue'
 import "@/plugins/mixins";
 
 import store from './store'
-import lodash from 'lodash'
-import VueLodash from 'vue-lodash'
 
 import Vuetify from 'vuetify'
 import 'vuetify/dist/vuetify.min.css'
@@ -14,8 +12,9 @@ const opts = {}
 
 export default new Vuetify(opts)
 
+export const eventBus = new Vue();
+
 Vue.config.productionTip = false
-Vue.use(VueLodash, { lodash: lodash })
 
 new Vue({
   vuetify : new Vuetify(),
