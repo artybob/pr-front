@@ -13,20 +13,17 @@
                         :server-items-length="purchasesMeta.total"
                         hide-default-footer
                         dense
+                        class="elevation-2"
                 >
                     <template v-slot:top>
                         <v-toolbar flat
                                    color="blue darken-3"
-                                   class="mb-1">
+                                   class="mb-2">
                             <v-toolbar-title class="white--text">Purchases list</v-toolbar-title>
-                            <v-divider
-                                    class="mx-4"
-                                    inset
-                                    vertical
-                            ></v-divider>
                             <v-spacer></v-spacer>
 
                             <v-select
+                                    style="max-width: 200px"
                                     v-model="sortBy"
                                     flat
                                     class="white"
@@ -37,10 +34,12 @@
                                     label="Sort by"
                             ></v-select>
                             <v-btn-toggle
+                                    class="mr-2 ml-2"
                                     v-model="sortDesc"
                                     mandatory
                             >
                                 <v-btn
+                                        plain
                                         large
                                         depressed
                                         color="blue"
@@ -49,6 +48,7 @@
                                     <v-icon>mdi-arrow-up</v-icon>
                                 </v-btn>
                                 <v-btn
+                                        plain
                                         large
                                         depressed
                                         color="blue"
@@ -64,13 +64,16 @@
                             >
                                 <template v-slot:activator="{ on, attrs }">
                                     <v-btn
+                                            class="white"
+                                            plain
+                                            large
                                             depressed
-                                            dark
-                                            class="mb-2"
                                             v-bind="attrs"
                                             v-on="on"
                                     >
-                                        New Item
+                                        <v-icon dark>
+                                            mdi-plus
+                                        </v-icon>
                                     </v-btn>
                                 </template>
                                 <v-card>
