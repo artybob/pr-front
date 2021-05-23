@@ -1,4 +1,4 @@
-# pr_front
+# Purchases requests frontend
 
 ## Project setup
 ```
