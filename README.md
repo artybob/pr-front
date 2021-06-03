@@ -1,24 +1,17 @@
-# pr_front
+# Purchases requests frontend
 
 ## Project setup
 ```
-yarn install
+npm i 
 ```
 
 ### Compiles and hot-reloads for development
 ```
-yarn serve
+npm run serve
 ```
 
-### Compiles and minifies for production
+### app url
 ```
-yarn build
-```
-
-### Lints and fixes files
-```
-yarn lint
+check .env file
 ```
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
